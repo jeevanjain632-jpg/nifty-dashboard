@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Nifty 50 Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: Arial; background: #111; color: white; text-align:center; }
+    .box { background:#222; padding:20px; margin:20px; border-radius:10px; }
+    .buy { color: green; }
+    .sell { color: red; }
+    .hold { color: yellow; }
+  </style>
+</head>
+
+<body>
+
+<h1>📊 Nifty 50 Dashboard</h1>
+
+<div class="box">
+  <h2>Price: <span id="price"></span></h2>
+  <h2>Signal: <span id="signal"></span></h2>
+</div>
+
+<div class="box">
+  <h3>RSI: <span id="rsi"></span></h3>
+  <h3>EMA: <span id="ema"></span></h3>
+  <h3>Volatility: <span id="vol"></span></h3>
+</div>
+
+<canvas id="chart"></canvas>
+
+<script>
+
+let prices = [22000,22100,22250,22180,22300,22400,22500,22450,22600];
+
+// RSI
+function rsiCalc(data){
+  let gain=0, loss=0;
+  for(let i=1;i<data.length;i++){
+    let diff = data[i]-data[i-1];
+    if(diff>0) gain+=diff;
+    else loss-=diff;
+  }
+  let rs = gain/loss;
+  return 100-(100/(1+rs));
+}
+
+// EMA
+function emaCalc(data){
+  let k = 2/(5+1);
+  let ema = data[0];
+  for(let i=1;i<data.length;i++){
+    ema = data[i]*k + ema*(1-k);
+  }
+  return ema;
+}
+
+// Volatility
+function volCalc(data){
+  let avg = data.reduce((a,b)=>a+b)/data.length;
+  let v = data.map(x=>(x-avg)**2).reduce((a,b)=>a+b)/data.length;
+  return Math.sqrt(v);
+}
+
+let rsi = rsiCalc(prices).toFixed(2);
+let ema = emaCalc(prices).toFixed(2);
+let vol = volCalc(prices).toFixed(2);
+
+let signal="HOLD";
+let price = prices[prices.length-1];
+
+if(rsi<30 && price>ema) signal="BUY";
+if(rsi>70 && price<ema) signal="SELL";
+
+document.getElementById("price").innerText=price;
+document.getElementById("rsi").innerText=rsi;
+document.getElementById("ema").innerText=ema;
+document.getElementById("vol").innerText=vol;
+
+let s = document.getElementById("signal");
+s.innerText=signal;
+s.className=signal.toLowerCase();
+
+// chart
+new Chart(document.getElementById("chart"), {
+  type:'line',
+  data:{
+    labels:prices.map((_,i)=>i),
+    datasets:[{label:'Nifty',data:prices}]
+  }
+});
+
+</script>
+
+</body>
+</html>
